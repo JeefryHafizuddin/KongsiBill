@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>KongsiBill: split the bill fairly after makan</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@500;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#d9e8df; --ink:#16201b; --green:#0b6e4f; --pink:#e0245e; --paper:#fff; --soft:#eef4f0; --line:#b9cfc2; --muted:#4f6258;
+  --head:"Bricolage Grotesque","Trebuchet MS",Arial,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--head);font-weight:500;line-height:1.5;font-size:17px}
+:focus-visible{outline:3px solid var(--pink);outline-offset:2px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+.wrap{max-width:1040px;margin:0 auto;padding:28px 20px 60px}
+header{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap;margin-bottom:26px}
+h1{font-size:clamp(40px,7vw,68px);font-weight:800;line-height:.95;margin:0;letter-spacing:-1.5px}
+h1 span{color:var(--green)}
+.tag{max-width:36ch;margin:0;color:var(--muted)}
+h2{font-size:22px;font-weight:700;margin:0 0 12px}
+.grid{display:grid;grid-template-columns:1.15fr .85fr;gap:28px;align-items:start}
+@media(max-width:860px){.grid{grid-template-columns:1fr}}
+.card{background:var(--soft);border:2px solid var(--ink);border-radius:14px;padding:20px;margin-bottom:20px}
+label{display:block;font-size:15px;font-weight:700;margin-bottom:4px}
+input[type=text],input[type=number]{width:100%;padding:11px 12px;border:2px solid var(--ink);border-radius:8px;background:#fff;font:inherit;color:var(--ink)}
+.inline{display:flex;gap:10px}
+.inline input{flex:1}
+button{font:inherit;font-weight:700;cursor:pointer;border-radius:8px;border:2px solid var(--ink);padding:10px 16px;background:var(--pink);color:#fff}
+button:hover{filter:brightness(1.08)}
+button.alt{background:#fff;color:var(--ink)}
+button.tiny{padding:2px 8px;font-size:14px;background:#fff;color:var(--ink)}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.chip{display:inline-flex;align-items:center;gap:6px;background:var(--green);color:#fff;border-radius:99px;padding:4px 6px 4px 14px;font-weight:700}
+.chip button{background:transparent;border:0;color:#fff;padding:0 8px;font-size:18px;line-height:1}
+.add-item{display:grid;grid-template-columns:1fr 120px auto;gap:10px;align-items:end}
+@media(max-width:560px){.add-item{grid-template-columns:1fr 1fr}.add-item button{grid-column:1/-1}}
+.item{background:#fff;border:2px solid var(--ink);border-radius:10px;padding:12px 14px;margin-top:12px}
+.item-top{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.item-top b{font-size:18px}
+.price{font-family:var(--mono);font-weight:600}
+.who{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.who button{padding:3px 12px;font-size:14px;border-radius:99px;background:#fff;color:var(--ink);border:2px solid var(--line)}
+.who button[aria-pressed=true]{background:var(--green);color:#fff;border-color:var(--green)}
+.warn{color:var(--pink);font-size:14px;margin:8px 0 0;font-weight:700}
+.opts{display:grid;gap:10px}
+.opt{display:flex;gap:10px;align-items:center;font-weight:500;margin:0}
+.opt input{width:20px;height:20px;accent-color:var(--green)}
+.empty{color:var(--muted);margin:10px 0 0}
+
+/* receipt */
+.side{position:sticky;top:16px}
+@media(max-width:860px){.side{position:static}}
+.receipt{position:relative;background:var(--paper);border:2px solid var(--ink);border-bottom:0;padding:24px 22px 20px;font-family:var(--mono);font-size:15px;margin-bottom:12px}
+.receipt::after{content:"";position:absolute;left:-2px;right:-2px;bottom:-12px;height:12px;background:radial-gradient(circle at 9px 0,var(--bg) 7px,var(--paper) 7.5px);background-size:18px 12px;border-left:2px solid var(--ink);border-right:2px solid var(--ink)}
+.receipt h2{font-family:var(--mono);text-align:center;font-size:18px;margin:0}
+.receipt .sub{text-align:center;color:var(--muted);font-size:13px;margin:2px 0 14px}
+.dash{border-top:2px dashed var(--line);margin:12px 0}
+.line{display:flex;justify-content:space-between;gap:10px}
+.person{margin-bottom:10px}
+.person .name{font-weight:600}
+.person .brk{color:var(--muted);font-size:12.5px}
+.grand{font-weight:600;font-size:17px}
+.sendrow{margin-top:26px;display:flex;gap:10px;flex-wrap:wrap}
+.sendrow button{flex:1}
+.note{font-size:14px;color:var(--muted);margin-top:10px}
+footer{margin-top:34px;border-top:2px solid var(--ink);padding-top:16px;display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;font-size:15px}
+footer a{color:var(--green);font-weight:800;text-decoration:underline;text-underline-offset:4px}
+footer a:hover{color:var(--pink)}
+details{margin-top:14px;max-width:70ch}
+summary{cursor:pointer;font-weight:700}
+details p{color:var(--muted);margin:8px 0 0}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Kongsi<span>Bill</span></h1>
+    <p class="tag">Add who ate what. Get what each person owes, with service charge and SST included.</p>
+  </header>
+
+  <div class="grid">
+    <div>
+      <section class="card" aria-labelledby="h-people">
+        <h2 id="h-people">1. Who is at the table?</h2>
+        <label for="pname">Name</label>
+        <div class="inline">
+          <input id="pname" type="text" maxlength="20" placeholder="e.g. Aiman" autocomplete="off">
+          <button id="addPerson" type="button">Add person</button>
+        </div>
+        <div class="chips" id="people"></div>
+      </section>
+
+      <section class="card" aria-labelledby="h-items">
+        <h2 id="h-items">2. What did you order?</h2>
+        <div class="add-item">
+          <div><label for="iname">Item</label><input id="iname" type="text" maxlength="30" placeholder="e.g. Nasi ayam" autocomplete="off"></div>
+          <div><label for="iprice">Price (RM)</label><input id="iprice" type="number" min="0" step="0.01" inputmode="decimal" placeholder="0.00"></div>
+          <button id="addItem" type="button">Add item</button>
+        </div>
+        <p class="warn" id="formErr" role="alert"></p>
+        <div id="items"></div>
+        <p class="note">Tap a name under an item to change who shares it. The price is split evenly between them.</p>
+      </section>
+
+      <section class="card" aria-labelledby="h-opt">
+        <h2 id="h-opt">3. Charges</h2>
+        <div class="opts">
+          <label class="opt"><input type="checkbox" id="sc" checked> Service charge 10%</label>
+          <label class="opt"><input type="checkbox" id="sst" checked> SST 6% (added after service charge)</label>
+          <label class="opt"><input type="checkbox" id="rnd" checked> Round each total to the nearest 5 sen</label>
+        </div>
+      </section>
+    </div>
+
+    <aside class="side">
+      <div class="receipt" aria-live="polite">
+        <h2>KongsiBill</h2>
+        <p class="sub">Who owes what</p>
+        <div id="out"></div>
+      </div>
+      <div class="sendrow">
+        <button id="copy" type="button">Copy for WhatsApp</button>
+        <button id="demo" type="button" class="alt">Try an example</button>
+        <button id="reset" type="button" class="alt">Clear all</button>
+      </div>
+    </aside>
+  </div>
+
+  <details>
+    <summary>About this project</summary>
+    <p>I built KongsiBill to solve a small problem I see every time friends eat out: working out who owes what when not everyone ordered the same things. It uses plain HTML, CSS and JavaScript with no libraries, saves your table in the browser, and works on a phone.</p>
+  </details>
+
+  <footer>
+    <span>Made by <a href="https://jeefryhafizuddin.github.io/portfolio/#contact" target="_blank" rel="noopener">JeffWorks</a></span>
+    <span>Jeefry Hafizuddin Bin Abdullah, Computer Science, UNITEN</span>
+  </footer>
+</div>
+
+<script>
+var KEY = "kongsibill-v1";
+var S = {people:[], items:[], sc:true, sst:true, rnd:true, id:1};
+var $ = function(id){return document.getElementById(id)};
+function esc(t){return String(t).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]})}
+function rm(n){return "RM " + n.toFixed(2)}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
+function load(){try{var r=localStorage.getItem(KEY);if(r){var d=JSON.parse(r);if(d&&d.people&&d.items)S=d}}catch(e){}}
+
+function calc(){
+  var rows = S.people.map(function(p){return {p:p,sub:0}});
+  var unassigned = 0;
+  S.items.forEach(function(it){
+    var by = it.by.filter(function(id){return S.people.some(function(p){return p.id===id})});
+    if(!by.length){unassigned += it.price; return}
+    rows.forEach(function(r){ if(by.indexOf(r.p.id)>-1) r.sub += it.price/by.length });
+  });
+  var grand = 0;
+  rows.forEach(function(r){
+    r.sc = S.sc ? r.sub*0.10 : 0;
+    r.sst = S.sst ? (r.sub+r.sc)*0.06 : 0;
+    var t = r.sub+r.sc+r.sst;
+    r.total = S.rnd ? Math.round(t*20)/20 : Math.round(t*100)/100;
+    grand += r.total;
+  });
+  return {rows:rows, grand:grand, unassigned:unassigned};
+}
+
+function render(){
+  $("sc").checked=S.sc; $("sst").checked=S.sst; $("rnd").checked=S.rnd;
+
+  $("people").innerHTML = S.people.map(function(p){
+    return '<span class="chip">'+esc(p.name)+'<button type="button" data-rp="'+p.id+'" aria-label="Remove '+esc(p.name)+'">&times;</button></span>';
+  }).join("") || '<p class="empty">No one yet. Add at least two people.</p>';
+
+  $("items").innerHTML = S.items.length ? S.items.map(function(it){
+    var chips = S.people.map(function(p){
+      var on = it.by.indexOf(p.id)>-1;
+      return '<button type="button" aria-pressed="'+on+'" data-i="'+it.id+'" data-p="'+p.id+'">'+esc(p.name)+'</button>';
+    }).join("");
+    var none = !it.by.some(function(id){return S.people.some(function(p){return p.id===id})});
+    return '<div class="item"><div class="item-top"><b>'+esc(it.name)+'</b><span><span class="price">'+rm(it.price)+'</span> <button class="tiny" type="button" data-ri="'+it.id+'" aria-label="Remove '+esc(it.name)+'">Remove</button></span></div>'
+      +'<div class="who">'+(chips||'<span class="empty">Add people first.</span>')+'</div>'
+      +(none&&S.people.length?'<p class="warn">Nobody is sharing this yet, so it is not counted.</p>':'')+'</div>';
+  }).join("") : '<p class="empty">No items yet.</p>';
+
+  var c = calc(), out = "";
+  if(!S.people.length || !S.items.length){
+    out = '<p class="sub" style="margin:0">Add people and items and the split appears here.</p>';
+  } else {
+    out = c.rows.map(function(r){
+      return '<div class="person"><div class="line"><span class="name">'+esc(r.p.name)+'</span><span class="name">'+rm(r.total)+'</span></div>'
+        +'<div class="brk">Food '+rm(r.sub)+(S.sc?' + service '+rm(r.sc):'')+(S.sst?' + SST '+rm(r.sst):'')+'</div></div>';
+    }).join("");
+    out += '<div class="dash"></div><div class="line grand"><span>Total</span><span>'+rm(c.grand)+'</span></div>';
+    if(c.unassigned>0) out += '<p class="brk" style="color:#e0245e;margin:8px 0 0">'+rm(c.unassigned)+' of items is not assigned to anyone.</p>';
+  }
+  $("out").innerHTML = out;
+  save();
+}
+
+function addPerson(){
+  var n = $("pname").value.trim();
+  if(!n) return;
+  if(S.people.some(function(p){return p.name.toLowerCase()===n.toLowerCase()})){$("pname").value="";return}
+  S.people.push({id:S.id++, name:n});
+  $("pname").value=""; $("pname").focus(); render();
+}
+function addItem(){
+  var n = $("iname").value.trim(), pr = parseFloat($("iprice").value);
+  $("formErr").textContent = "";
+  if(!n){$("formErr").textContent="Enter the item name.";return}
+  if(!(pr>=0) || isNaN(pr)){$("formErr").textContent="Enter a price, for example 12.90.";return}
+  if(!S.people.length){$("formErr").textContent="Add the people first.";return}
+  S.items.push({id:S.id++, name:n, price:Math.round(pr*100)/100, by:S.people.map(function(p){return p.id})});
+  $("iname").value=""; $("iprice").value=""; $("iname").focus(); render();
+}
+
+$("addPerson").onclick = addPerson;
+$("pname").onkeydown = function(e){if(e.key==="Enter")addPerson()};
+$("addItem").onclick = addItem;
+$("iprice").onkeydown = $("iname").onkeydown = function(e){if(e.key==="Enter")addItem()};
+["sc","sst","rnd"].forEach(function(k){$(k).onchange=function(){S[k]=this.checked;render()}});
+
+document.addEventListener("click", function(e){
+  var t = e.target.closest("button"); if(!t) return;
+  if(t.dataset.rp){var id=+t.dataset.rp; S.people=S.people.filter(function(p){return p.id!==id}); S.items.forEach(function(it){it.by=it.by.filter(function(x){return x!==id})}); render()}
+  else if(t.dataset.ri){var iid=+t.dataset.ri; S.items=S.items.filter(function(i){return i.id!==iid}); render()}
+  else if(t.dataset.i){
+    var it = S.items.filter(function(i){return i.id===+t.dataset.i})[0], pid=+t.dataset.p, at=it.by.indexOf(pid);
+    if(at>-1) it.by.splice(at,1); else it.by.push(pid);
+    render();
+  }
+});
+
+$("reset").onclick = function(){S={people:[],items:[],sc:true,sst:true,rnd:true,id:1};render()};
+$("demo").onclick = function(){
+  var names=["Aiman","Mei Ling","Raju","Sarah"];
+  S={people:[],items:[],sc:true,sst:true,rnd:true,id:1};
+  names.forEach(function(n){S.people.push({id:S.id++,name:n})});
+  var P=S.people.map(function(p){return p.id});
+  function it(n,pr,by){S.items.push({id:S.id++,name:n,price:pr,by:by})}
+  it("Nasi ayam penyet",13.5,[P[0]]);
+  it("Char kuey teow",11.9,[P[1]]);
+  it("Roti canai set",8,[P[2]]);
+  it("Ice lemon tea",6.5,[P[3]]);
+  it("Teh tarik",3.5,[P[0],P[2]]);
+  it("Cheese naan to share",7,P);
+  render();
+};
+
+$("copy").onclick = function(){
+  var c = calc(), btn=this;
+  if(!c.rows.length){return}
+  var txt = "Bill split (KongsiBill)\n" + c.rows.map(function(r){return r.p.name+": "+rm(r.total)}).join("\n") + "\nTotal: "+rm(c.grand);
+  function done(){btn.textContent="Copied!";setTimeout(function(){btn.textContent="Copy for WhatsApp"},1600)}
+  if(navigator.clipboard && window.isSecureContext){navigator.clipboard.writeText(txt).then(done,function(){fallback()})}
+  else fallback();
+  function fallback(){var a=document.createElement("textarea");a.value=txt;document.body.appendChild(a);a.select();try{document.execCommand("copy");done()}catch(e){}document.body.removeChild(a)}
+};
+
+load(); render();
+</script>
+</body>
+</html>
